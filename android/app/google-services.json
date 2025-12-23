@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "993243203252",
+    "project_id": "pupr-konstruksi-capstone",
+    "storage_bucket": "pupr-konstruksi-capstone.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:993243203252:android:312bf54b68e7145938f9e1",
+        "android_client_info": {
+          "package_name": "com.puprjogja.konstruksitukang.app_konstruksi_tukang"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFI65qmsQpanzqk6USAynljbqgKttu_Vg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
