@@ -1,9 +1,14 @@
+import 'package:app_konstruksi_tukang/auth.dart';
 import 'package:app_konstruksi_tukang/user/user_dashboard.dart';
+import 'package:app_konstruksi_tukang/worker/worker_dashboard.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -19,7 +24,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Aplikasi Tukang PUPR Jogja',
+      title: "Aplikasi Tukang PUPR Jogja",
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -38,7 +43,16 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue, brightness: Brightness.light),
       ),
-      home: const HomePage(title: 'Aplikasi Tukang PUPR Jogja'),
+      home: FutureBuilder(
+        future: _getUserStatus(),
+        builder: (context, AsyncSnapshot<Widget> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return snapshot.data ?? const HomePage(title: "Aplikasi Tukang PUPR Jogja");
+        }
+      ),
     );
   }
 }
@@ -110,12 +124,12 @@ class _HomePageState extends State<HomePage> {
           children: [
             Container(
               margin: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-              padding: EdgeInsets.all(20.0),
+              padding: EdgeInsets.all(10.0),
               decoration: const BoxDecoration(color: Colors.white),
               child: Column(
                 children: [
                   SegmentedButton<HomePageForms>(
-                    segments: const <ButtonSegment<HomePageForms>>[
+                    segments: <ButtonSegment<HomePageForms>>[
                       ButtonSegment<HomePageForms>(
                         value: HomePageForms.login,
                         label: Text('Masuk'),
@@ -149,15 +163,14 @@ class _HomePageState extends State<HomePage> {
 }
 
 class _LoginForm extends StatefulWidget {
-
-  const _LoginForm({super.key});
+  const _LoginForm();
 
   @override
   State<_LoginForm> createState() => _LoginFormState();
 }
 
 class _LoginFormState extends State<_LoginForm> {
-  String phoneNumber = "";
+  TextEditingController phoneController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -167,28 +180,39 @@ class _LoginFormState extends State<_LoginForm> {
         children: [
           TextField(
             keyboardType: TextInputType.phone,
+            controller: phoneController,
             decoration: InputDecoration(
               icon: Icon(Icons.phone),
               labelText: 'Nomor Telepon',
-              border: OutlineInputBorder(),
+              hintText: '(+62) 123-4567-8901',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(15),
+                ),
+              ),
             ),
-            onChanged: (String newPhoneNum) {
-              setState(() {
-                phoneNumber = newPhoneNum;
-              });
-            },
+
           ),
           SizedBox(height: 20),
           FilledButton(
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (context) => const UserDashboard(),
-                ),
-              );
+              String phoneNumber = phoneController.text;
+
+              // most mobile phones in indonesia are 12 characters (excluding leading 0)
+              if (phoneNumber.length == 11 && RegExp(r'^[0-9]{11}').hasMatch(phoneNumber)) {
+                AppAuthentication.startLogin(
+                  context,
+                  phoneNumber: phoneNumber
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text("Silakan masukkan nomor telepon yang valid, tanpa +62 atau 0 di awal.")
+                  )
+                );
+              }
             },
-            child: Text('Kirim Kode OTP ke WhatsApp'),
+            child: Text('Kirim Kode OTP'),
           ),
         ],
       ),
@@ -199,16 +223,15 @@ class _LoginFormState extends State<_LoginForm> {
 enum RegisterRole { user, worker }
 
 class _RegisterForm extends StatefulWidget {
-
-  const _RegisterForm({super.key});
+  const _RegisterForm();
 
   @override
   State<_RegisterForm> createState() => _RegisterFormState();
 }
 
 class _RegisterFormState extends State<_RegisterForm> {
-  String fullName = "";
-  String phoneNumber = "";
+  TextEditingController fullNameController = TextEditingController();
+  TextEditingController phoneController = TextEditingController();
   RegisterRole? registerAs = RegisterRole.user;
 
   @override
@@ -219,30 +242,31 @@ class _RegisterFormState extends State<_RegisterForm> {
         mainAxisAlignment: .center,
         children: [
           TextField(
+            controller: fullNameController,
             decoration: InputDecoration(
               icon: Icon(Icons.person),
               labelText: 'Nama Lengkap',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(15),
+                ),
+              ),
             ),
-            onChanged: (String newName) {
-              setState(() {
-                fullName = newName;
-              });
-            },
           ),
           SizedBox(height: 10),
           TextField(
             keyboardType: TextInputType.phone,
+            controller: phoneController,
             decoration: InputDecoration(
               icon: Icon(Icons.phone),
               labelText: 'Nomor Telepon',
-              border: OutlineInputBorder(),
+              hintText: '(+62) 123-4567-8901',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(15),
+                ),
+              ),
             ),
-            onChanged: (String newPhoneNum) {
-              setState(() {
-                phoneNumber = newPhoneNum;
-              });
-            },
           ),
           SizedBox(height: 10),
           RadioGroup<RegisterRole>(
@@ -259,14 +283,18 @@ class _RegisterFormState extends State<_RegisterForm> {
                     'Daftar sebagai Pengguna',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  leading: Radio<RegisterRole>(value: RegisterRole.user),
+                  leading: Radio<RegisterRole>(
+                    value: RegisterRole.user,
+                  ),
                 ),
                 ListTile(
                   title: Text(
                     'Daftar sebagai Pekerja',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  leading: Radio<RegisterRole>(value: RegisterRole.worker),
+                  leading: Radio<RegisterRole>(
+                    value: RegisterRole.worker,
+                  ),
                 ),
               ],
             ),
@@ -274,12 +302,54 @@ class _RegisterFormState extends State<_RegisterForm> {
           SizedBox(height: 20),
           FilledButton(
             onPressed: () {
+              String fullName = fullNameController.text;
+              String phoneNumber = phoneController.text;
 
+              if ((phoneNumber.length == 11) && RegExp(r'^[0-9]{11}').hasMatch(phoneNumber)) {
+                AppAuthentication.startSignUp(
+                  context,
+                  fullName: fullName,
+                  phoneNumber: phoneNumber,
+                  role: registerAs!,
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text("Silakan masukkan nomor telepon yang valid, tanpa +62 atau 0 di awal.")
+                    )
+                );
+              }
             },
-            child: Text('Kirim Kode OTP ke WhatsApp'),
+            child: Text('Kirim Kode OTP'),
           ),
         ],
       ),
     );
+  }
+}
+
+Future<Widget> _getUserStatus() async {
+  User? user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) {
+    return const HomePage(title: "Aplikasi Tukang PUPR Jogja");
+  } else {
+    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+
+    if (!doc.exists) {
+      return const HomePage(title: "Aplikasi Tukang PUPR Jogja");
+    } else {
+      Map<String, dynamic>? data = doc.data();
+
+      String? role = data?['userRole'];
+
+      if (role == "user") {
+        return const UserDashboard();
+      } else if (role == "worker") {
+        return const WorkerDashboard();
+      } else {
+        return const HomePage(title: "Aplikasi Tukang PUPR Jogja");
+      }
+    }
   }
 }

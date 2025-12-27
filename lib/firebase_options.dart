@@ -50,20 +50,21 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCF8z4oh2FhZrDRw04vFvJghQvJ4U-CmAM',
-    appId: '1:993243203252:web:6c79a684e267d95438f9e1',
-    messagingSenderId: '993243203252',
-    projectId: 'pupr-konstruksi-capstone',
-    authDomain: 'pupr-konstruksi-capstone.firebaseapp.com',
-    storageBucket: 'pupr-konstruksi-capstone.firebasestorage.app',
-    measurementId: 'G-YR6XRRMSZN',
+    apiKey: 'AIzaSyBdCZ4ryl6p3dH83BC1EphkK7saCqbIxfk',
+    appId: '1:434684562078:web:82dea6bdc069d77841898f',
+    messagingSenderId: '434684562078',
+    projectId: 'pupr-konstruksi-capstone-ce757',
+    authDomain: 'pupr-konstruksi-capstone-ce757.firebaseapp.com',
+    storageBucket: 'pupr-konstruksi-capstone-ce757.firebasestorage.app',
+    measurementId: 'G-5KYZYB7BQ5',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAFI65qmsQpanzqk6USAynljbqgKttu_Vg',
-    appId: '1:993243203252:android:c9d5fc6e8f3778a738f9e1',
-    messagingSenderId: '993243203252',
-    projectId: 'pupr-konstruksi-capstone',
-    storageBucket: 'pupr-konstruksi-capstone.firebasestorage.app',
+    apiKey: 'AIzaSyAno0cK5Vm5hqxzMSYXC0EeHV3dxPXCrQA',
+    appId: '1:434684562078:android:5521c15437d3796741898f',
+    messagingSenderId: '434684562078',
+    projectId: 'pupr-konstruksi-capstone-ce757',
+    storageBucket: 'pupr-konstruksi-capstone-ce757.firebasestorage.app',
   );
+
 }
