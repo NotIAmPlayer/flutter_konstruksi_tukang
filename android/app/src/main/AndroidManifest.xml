@@ -3,6 +3,9 @@
         android:label="app_konstruksi_tukang"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyD4URra0X9wmtzDB_Q9j_9fppSukqkP9Qw" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

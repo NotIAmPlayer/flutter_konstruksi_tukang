@@ -81,11 +81,6 @@ class _HomePageState extends State<HomePage> {
   HomePageForms selectedForm = HomePageForms.login;
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
@@ -170,51 +165,73 @@ class _LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<_LoginForm> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   TextEditingController phoneController = TextEditingController();
+
+  @override
+  void dispose() {
+    phoneController.dispose();
+    super.dispose();
+  }
+
+  void _submitLoginForm() {
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Harap melengkapi semua data sebelum mendapatkan kode OTP.")
+          )
+      );
+      return;
+    }
+
+    String phoneNumber = phoneController.text;
+
+    // most mobile phones in indonesia are 12 characters (excluding leading 0)
+    if (phoneNumber.length == 11 && RegExp(r'^[0-9]{11}').hasMatch(phoneNumber)) {
+      AppAuthentication.startLogin(
+          context,
+          phoneNumber: phoneNumber
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Silakan masukkan nomor telepon yang valid.")
+          )
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          TextField(
-            keyboardType: TextInputType.phone,
-            controller: phoneController,
-            decoration: InputDecoration(
-              icon: Icon(Icons.phone),
-              labelText: 'Nomor Telepon',
-              hintText: '(+62) 123-4567-8901',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(15),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            TextFormField(
+              keyboardType: TextInputType.phone,
+              controller: phoneController,
+              decoration: InputDecoration(
+                icon: Icon(Icons.phone),
+                labelText: 'Nomor Telepon',
+                hintText: '(+62) 123-4567-8901',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(15),
+                  ),
                 ),
               ),
+              validator: (v) => v!.isEmpty ? "Nomor telepon harus diisi tanpa +62 atau 0 di awal" : null,
             ),
-
-          ),
-          SizedBox(height: 20),
-          FilledButton(
-            onPressed: () {
-              String phoneNumber = phoneController.text;
-
-              // most mobile phones in indonesia are 12 characters (excluding leading 0)
-              if (phoneNumber.length == 11 && RegExp(r'^[0-9]{11}').hasMatch(phoneNumber)) {
-                AppAuthentication.startLogin(
-                  context,
-                  phoneNumber: phoneNumber
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text("Silakan masukkan nomor telepon yang valid, tanpa +62 atau 0 di awal.")
-                  )
-                );
-              }
-            },
-            child: Text('Kirim Kode OTP'),
-          ),
-        ],
+            SizedBox(height: 20),
+            FilledButton(
+              onPressed: _submitLoginForm,
+              child: Text('Dapatkan Kode OTP'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -230,99 +247,133 @@ class _RegisterForm extends StatefulWidget {
 }
 
 class _RegisterFormState extends State<_RegisterForm> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   TextEditingController fullNameController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
-  RegisterRole? registerAs = RegisterRole.user;
+  RegisterRole? registerAs;
+
+  @override
+  void dispose() {
+    phoneController.dispose();
+    fullNameController.dispose();
+    super.dispose();
+  }
+
+  void _submitRegisterForm() {
+    if (!_formKey.currentState!.validate() || registerAs!.name.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Harap melengkapi semua data sebelum mendapatkan kode OTP.")
+          )
+      );
+      return;
+    }
+
+    String fullName = fullNameController.text;
+    String phoneNumber = phoneController.text;
+
+    if (fullName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Silakan mengisi nama lengkap terlebih dahulu.")
+          )
+      );
+      return;
+    }
+
+    if ((phoneNumber.length == 11) && RegExp(r'^[0-9]{11}').hasMatch(phoneNumber)) {
+      AppAuthentication.startSignUp(
+        context,
+        fullName: fullName,
+        phoneNumber: phoneNumber,
+        role: registerAs!,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Silakan masukkan nomor telepon yang valid.")
+          )
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisAlignment: .center,
-        children: [
-          TextField(
-            controller: fullNameController,
-            decoration: InputDecoration(
-              icon: Icon(Icons.person),
-              labelText: 'Nama Lengkap',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(15),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisAlignment: .center,
+          children: [
+            TextFormField(
+              controller: fullNameController,
+              decoration: InputDecoration(
+                icon: Icon(Icons.person),
+                labelText: 'Nama Lengkap',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(15),
+                  ),
                 ),
               ),
+              validator: (v) => v!.isEmpty ? "Nama lengkap harus diisi" : null,
             ),
-          ),
-          SizedBox(height: 10),
-          TextField(
-            keyboardType: TextInputType.phone,
-            controller: phoneController,
-            decoration: InputDecoration(
-              icon: Icon(Icons.phone),
-              labelText: 'Nomor Telepon',
-              hintText: '(+62) 123-4567-8901',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(15),
+            SizedBox(height: 10),
+            TextFormField(
+              keyboardType: TextInputType.phone,
+              controller: phoneController,
+              decoration: InputDecoration(
+                icon: Icon(Icons.phone),
+                labelText: 'Nomor Telepon',
+                hintText: '(+62) 123-4567-8901',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(15),
+                  ),
                 ),
               ),
+              validator: (v) => v!.isEmpty ? "Nomor telepon harus diisi tanpa +62 atau 0 di awal" : null,
             ),
-          ),
-          SizedBox(height: 10),
-          RadioGroup<RegisterRole>(
-            groupValue: registerAs,
-            onChanged: (RegisterRole? val) {
-              setState(() {
-                registerAs = val;
-              });
-            },
-            child: Column(
-              children: [
-                ListTile(
-                  title: Text(
-                    'Daftar sebagai Pengguna',
-                    style: Theme.of(context).textTheme.bodyMedium,
+            SizedBox(height: 10),
+            RadioGroup<RegisterRole>(
+              groupValue: registerAs,
+              onChanged: (RegisterRole? val) {
+                setState(() {
+                  registerAs = val;
+                });
+              },
+              child: Column(
+                children: [
+                  ListTile(
+                    title: Text(
+                      'Daftar sebagai Pengguna',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    leading: Radio<RegisterRole>(
+                      value: RegisterRole.user,
+                    ),
                   ),
-                  leading: Radio<RegisterRole>(
-                    value: RegisterRole.user,
+                  ListTile(
+                    title: Text(
+                      'Daftar sebagai Pekerja',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    leading: Radio<RegisterRole>(
+                      value: RegisterRole.worker,
+                    ),
                   ),
-                ),
-                ListTile(
-                  title: Text(
-                    'Daftar sebagai Pekerja',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  leading: Radio<RegisterRole>(
-                    value: RegisterRole.worker,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          SizedBox(height: 20),
-          FilledButton(
-            onPressed: () {
-              String fullName = fullNameController.text;
-              String phoneNumber = phoneController.text;
-
-              if ((phoneNumber.length == 11) && RegExp(r'^[0-9]{11}').hasMatch(phoneNumber)) {
-                AppAuthentication.startSignUp(
-                  context,
-                  fullName: fullName,
-                  phoneNumber: phoneNumber,
-                  role: registerAs!,
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text("Silakan masukkan nomor telepon yang valid, tanpa +62 atau 0 di awal.")
-                    )
-                );
-              }
-            },
-            child: Text('Kirim Kode OTP'),
-          ),
-        ],
+            SizedBox(height: 20),
+            FilledButton(
+              onPressed: _submitRegisterForm,
+              child: Text('Dapatkan Kode OTP'),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -46,6 +46,7 @@ class _OTPVerificationPage extends State<OTPVerificationPage> {
                         ),
                       ),
                     ),
+                    maxLength: 6,
                   ),
                   const SizedBox(height: 20),
                   FilledButton(

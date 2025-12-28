@@ -76,10 +76,10 @@ class AppAuthentication {
     );
   }
 
-  void logoutApp(BuildContext context) async {
+  static void logoutApp(BuildContext context) async {
     await _firebaseAuth.signOut();
 
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(
           builder: (ctx) => const HomePage(title: "Aplikasi Tukang PUPR Jogja")
